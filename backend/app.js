@@ -1,26 +1,29 @@
 // app.js
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+const authRoutes = require('./routes/authRoutes');
+const bookRoutes = require('./routes/bookRoutes');
 
 const app = express();
 
-// Setting up CORS headers
+app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to the Book Rating API!' });
+  });
+  
+
+// Setup CORS headers
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization'
-  );
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  next();
-});
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    next();
+  });
 
 // Body-parser middleware to parse JSON data in request body
-app.use(express.json());
+app.use(express.json()); // Middleware for JSON data
 
-// Import routes and set up API endpoints
-const bookRoutes = require('./routes/bookRoutes');
-app.use('/api/books', bookRoutes); // routes prefix
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/books', bookRoutes);
 
 module.exports = app;
