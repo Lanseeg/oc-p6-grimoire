@@ -23,7 +23,7 @@ exports.getBookById = async (req, res) => {
 };
 
 // Get top 3 books with best rating
-exports.getBestRatedBooks = async (req, res) => {
+exports.getBestRatedBooks = async (req, res, next) => {
   try {
     const books = await Book.find().sort({ averageRating: -1 }).limit(3);
     res.status(200).json(books);
@@ -33,15 +33,18 @@ exports.getBestRatedBooks = async (req, res) => {
 };
 
 // Create a new book
-exports.createBook = async (req, res) => {
+exports.createBook = async (req, res, next) => {
   try {
+    const bookData = req.file ? JSON.parse(req.body.book) : req.body;
+
     const book = new Book({
-      ...req.body,
+      ...bookData,
       userId: req.userId,
-      imageUrl: req.body.imageUrl,
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
       ratings: [],
       averageRating: 0
     });
+
     await book.save();
     res.status(201).json({ message: 'Book created successfully', book });
   } catch (error) {
@@ -50,10 +53,10 @@ exports.createBook = async (req, res) => {
 };
 
 // Update a book by ID
-exports.updateBook = async (req, res) => {
+exports.updateBook = async (req, res, next) => {
   try {
     const updateData = req.file 
-      ? { ...JSON.parse(req.body.book), imageUrl: req.file.path }
+      ? { ...JSON.parse(req.body.book), imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` }
       : { ...req.body };
     
     const book = await Book.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -65,7 +68,7 @@ exports.updateBook = async (req, res) => {
 };
 
 // Delete a book by ID
-exports.deleteBook = async (req, res) => {
+exports.deleteBook = async (req, res, next) => {
   try {
     const book = await Book.findByIdAndDelete(req.params.id);
     if (!book) return res.status(404).json({ message: 'Book not found' });
@@ -76,7 +79,7 @@ exports.deleteBook = async (req, res) => {
 };
 
 // Add a rating to a book by ID
-exports.addRating = async (req, res) => {
+exports.addRating = async (req, res, next) => {
   try {
     const { userId, rating } = req.body;
     if (rating < 0 || rating > 5) {
@@ -86,13 +89,11 @@ exports.addRating = async (req, res) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: 'Book not found' });
 
-    // Check if user has already rated
     const existingRating = book.ratings.find(r => r.userId === userId);
     if (existingRating) {
       return res.status(400).json({ message: 'User has already rated this book' });
     }
 
-    // Add new rating and update average
     book.ratings.push({ userId, rating });
     book.averageRating = book.ratings.reduce((sum, r) => sum + r.rating, 0) / book.ratings.length;
     
