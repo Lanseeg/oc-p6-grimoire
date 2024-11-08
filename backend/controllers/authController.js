@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // Controller for user signup
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10); // Hash password
     const user = new User({ email: req.body.email, password: hashedPassword });
@@ -15,7 +15,7 @@ exports.signup = async (req, res) => {
 };
 
 // Controller for user login
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     // Find user email
     const user = await User.findOne({ email: req.body.email });
