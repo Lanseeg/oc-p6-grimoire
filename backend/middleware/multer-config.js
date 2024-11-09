@@ -38,6 +38,7 @@ const uploadAndCompressImage = (req, res, next) => {
   
       try {
         // Sharp for compressing images
+        sharp.cache(false);
         await sharp(tempPath)
           .resize(800, 600)
           .jpeg({ quality: 80 })
@@ -45,16 +46,17 @@ const uploadAndCompressImage = (req, res, next) => {
   
         console.log('Image compressed successfully');
   
-        // Deleted remaining file
+        // Delete remaining file
         if (fs.existsSync(tempPath)) {
-            fs.unlink(tempPath, (err) => {
-              if (err) {
-                console.error('Failed to delete original image:', err);
-              } else {
-                console.log('Original image deleted');
-              }
-            });
-          }
+          fs.unlink(tempPath, (err) => {
+            if (err) {
+              console.error('Failed to delete original image:', err);
+            } else {
+              console.log('Original image deleted');
+            }
+          });
+        }
+        
   
         req.file.path = compressedImagePath;
         req.file.filename = `compressed-${filename}`;
