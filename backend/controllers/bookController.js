@@ -37,9 +37,12 @@ exports.createBook = async (req, res, next) => {
   try {
     const bookData = req.file ? JSON.parse(req.body.book) : req.body;
 
+    // Supprimer le champ userId de la requête envoyée par le client pour éviter toute usurpation
+    delete bookData.userId;
+
     const book = new Book({
       ...bookData,
-      userId: req.userId,
+      userId: req.userId, // Utilise le userId extrait du token
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
       ratings: [],
       averageRating: 0
@@ -52,15 +55,28 @@ exports.createBook = async (req, res, next) => {
   }
 };
 
+
 // Update a book by ID
 exports.updateBook = async (req, res, next) => {
   try {
     const updateData = req.file 
       ? { ...JSON.parse(req.body.book), imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` }
       : { ...req.body };
-    
-    const book = await Book.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
+    delete updateData.userId;
+
+    const book = await Book.findById(req.params.id);
+
     if (!book) return res.status(404).json({ message: 'Book not found' });
+
+    // check user is author of the post
+    if (book.userId.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Unauthorized to modify this book' });
+    }
+
+    Object.assign(book, updateData);
+    await book.save();
+
     res.status(200).json({ message: 'Book updated successfully', book });
   } catch (error) {
     res.status(400).json({ message: 'Failed to update book', error });
