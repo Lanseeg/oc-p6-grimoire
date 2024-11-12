@@ -1,5 +1,7 @@
 // controllers/bookController.js
 const Book = require('../models/Book');
+const fs = require('fs');
+
 
 // Get all books
 exports.getAllBooks = async (req, res) => {
@@ -55,7 +57,6 @@ exports.createBook = async (req, res, next) => {
   }
 };
 
-
 // Update a book by ID
 exports.updateBook = async (req, res, next) => {
   try {
@@ -86,13 +87,33 @@ exports.updateBook = async (req, res, next) => {
 // Delete a book by ID
 exports.deleteBook = async (req, res, next) => {
   try {
-    const book = await Book.findByIdAndDelete(req.params.id);
+    const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: 'Book not found' });
-    res.status(200).json({ message: 'Book deleted successfully' });
+
+    // Check user is the owner
+    if (book.userId.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Unauthorized to delete this book' });
+    }
+
+    // Image path to delete
+    const filename = book.imageUrl.split('/images/')[1];
+    
+    // delete image
+    fs.unlink(`images/${filename}`, async (err) => {
+      if (err) {
+        console.error('Failed to delete image:', err);
+        return res.status(500).json({ message: 'Failed to delete image', error: err });
+      }
+
+      // Delete book
+      await book.deleteOne();
+      res.status(200).json({ message: 'Book deleted successfully' });
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete book', error });
   }
 };
+
 
 // Add a rating to a book by ID
 exports.addRating = async (req, res, next) => {
