@@ -2,3 +2,7 @@ node_modules
 .idea
 .env
 images
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
