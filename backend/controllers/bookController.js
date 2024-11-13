@@ -39,12 +39,11 @@ exports.createBook = async (req, res, next) => {
   try {
     const bookData = req.file ? JSON.parse(req.body.book) : req.body;
 
-    // Supprimer le champ userId de la requête envoyée par le client pour éviter toute usurpation
     delete bookData.userId;
 
     const book = new Book({
       ...bookData,
-      userId: req.userId, // Utilise le userId extrait du token
+      userId: req.userId, // token userId
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
       ratings: [],
       averageRating: 0
