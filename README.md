@@ -15,6 +15,7 @@ npm install
 
 # Create .env file & paste content of provided Gist 
 touch .env
+FROM PROVIDED CODE (or see .env.example)
 npm start
 
 # Go to /Frontend
