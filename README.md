@@ -3,7 +3,7 @@ The purpose of this app is to allow users to create books, rate them and view ex
 
 Project installation: 
 
-Run your terminal (for instance is VSCODE) and follow these commands: 
+Run your terminal and follow these commands: 
 
 # Clone project
 git clone https://github.com/Lanseeg/oc-p6-grimoire.git
