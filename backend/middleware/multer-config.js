@@ -40,7 +40,7 @@ const uploadAndCompressImage = (req, res, next) => {
         // Sharp for compressing images
         sharp.cache(false);
         await sharp(tempPath)
-          .resize(800, 600)
+          .resize(600, 800)
           .jpeg({ quality: 80 })
           .toFile(compressedImagePath);
   

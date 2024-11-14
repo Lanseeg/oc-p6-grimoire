@@ -41,17 +41,29 @@ exports.createBook = async (req, res, next) => {
 
     delete bookData.userId;
 
-    const book = new Book({
+    if (bookData.ratings) {
+      bookData.ratings = bookData.ratings.map(ratingObj => ({
+        userId: ratingObj.userId,
+        rating: ratingObj.grade
+      }));
+    }
+
+    const newBook = new Book({
       ...bookData,
-      userId: req.userId, // token userId
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-      ratings: [],
-      averageRating: 0
+      userId: req.userId,
+      imageUrl: req.file ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}` : null
     });
 
-    await book.save();
-    res.status(201).json({ message: 'Book created successfully', book });
+    if (bookData.ratings && bookData.averageRating !== undefined) {
+      newBook.ratings = bookData.ratings;
+      newBook.averageRating = bookData.averageRating;
+    }
+
+    await newBook.save();
+
+    res.status(201).json({ message: 'Book created successfully', book: newBook });
   } catch (error) {
+    console.error("Error during book creation:", error);
     res.status(400).json({ message: 'Failed to create book', error });
   }
 };
@@ -89,22 +101,18 @@ exports.deleteBook = async (req, res, next) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: 'Book not found' });
 
-    // Check user is the owner
     if (book.userId.toString() !== req.userId) {
       return res.status(403).json({ message: 'Unauthorized to delete this book' });
     }
 
-    // Image path to delete
     const filename = book.imageUrl.split('/images/')[1];
     
-    // delete image
     fs.unlink(`images/${filename}`, async (err) => {
       if (err) {
         console.error('Failed to delete image:', err);
         return res.status(500).json({ message: 'Failed to delete image', error: err });
       }
 
-      // Delete book
       await book.deleteOne();
       res.status(200).json({ message: 'Book deleted successfully' });
     });
@@ -117,25 +125,34 @@ exports.deleteBook = async (req, res, next) => {
 // Add a rating to a book by ID
 exports.addRating = async (req, res, next) => {
   try {
-    const { userId, rating } = req.body;
+    const { rating } = req.body;
+    const userId = req.userId;
+
     if (rating < 0 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be between 0 and 5' });
     }
-    
+
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ message: 'Book not found' });
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
 
     const existingRating = book.ratings.find(r => r.userId === userId);
     if (existingRating) {
       return res.status(400).json({ message: 'User has already rated this book' });
     }
 
+    // Add book rating
     book.ratings.push({ userId, rating });
-    book.averageRating = book.ratings.reduce((sum, r) => sum + r.rating, 0) / book.ratings.length;
-    
+
+    // Average book rating
+    const totalRating = book.ratings.reduce((sum, r) => sum + r.rating, 0);
+    book.averageRating = totalRating / book.ratings.length;
+
     await book.save();
+
     res.status(200).json(book);
   } catch (error) {
-    res.status(400).json({ message: 'Failed to add rating', error });
+    res.status(500).json({ message: 'Failed to add rating', error });
   }
 };
