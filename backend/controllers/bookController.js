@@ -2,7 +2,6 @@
 const Book = require('../models/Book');
 const fs = require('fs');
 
-
 // Get all books
 exports.getAllBooks = async (req, res) => {
   try {
@@ -142,7 +141,7 @@ exports.addRating = async (req, res, next) => {
       return res.status(400).json({ message: 'User has already rated this book' });
     }
 
-    // Add book rating
+    // Add new book rating
     book.ratings.push({ userId, rating });
 
     // Average book rating
