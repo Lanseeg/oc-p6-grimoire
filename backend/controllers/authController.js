@@ -29,7 +29,7 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate a token with the user's ID
+    // Generate a token with user ID
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     // Respond with user ID and token
