@@ -1,7 +1,4 @@
 node_modules
 .idea
 .env
-.env*
 .flaskenv*
-!.env.project
-!.env.vault
